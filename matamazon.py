@@ -466,7 +466,6 @@ def load_system_from_file(path):
             line = line.strip()
             if not line:
                 continue
-            # any evaluation errors are considered fatal per tests
             obj = eval(line)
             
             if isinstance(obj, Customer):
@@ -474,12 +473,105 @@ def load_system_from_file(path):
             elif isinstance(obj, Supplier):
                 system.register_entity(obj, False)
             elif isinstance(obj, Product):
-                # defer product addition until all suppliers/customers processed
                 products_buffer.append(obj)
-    # second pass for products (may raise any exceptions normally)
     for prod in products_buffer:
         system.add_or_update_product(prod)
     
     return system
 
-# TODO all the main part here
+def _execute_log_line(system: MatamazonSystem, line: str):
+    parts = shlex.split(line)
+    if not parts or parts[0].startswith("#"):
+        return
+    cmd = parts[0].lower()
+    try:
+        if cmd == "register":
+            if len(parts) < 6:
+                raise ValueError("Malformed register command")
+            typ = parts[1].lower()
+            _id = int(parts[2])
+            name = parts[3].replace("_", " ")
+            city = parts[4].replace("_", " ")
+            address = parts[5].replace("_", " ")
+            if typ == "customer":
+                system.register_entity(Customer(_id, name, city, address), True)
+            elif typ == "supplier":
+                system.register_entity(Supplier(_id, name, city, address), False)
+            else:
+                raise ValueError("Unknown register type")
+        elif cmd in ("add", "update"):
+            if len(parts) < 6:
+                raise ValueError("Malformed add/update command")
+            _id = int(parts[1])
+            name = parts[2].replace("_", " ")
+            price = float(parts[3])
+            supplier_id = int(parts[4])
+            quantity = int(parts[5])
+            prod = Product(_id, name, price, supplier_id, quantity)
+            system.add_or_update_product(prod)
+        elif cmd == "order":
+            if len(parts) < 3:
+                raise ValueError("Malformed order command")
+            cust = int(parts[1])
+            prodid = int(parts[2])
+            qty = int(parts[3]) if len(parts) >= 4 else 1
+            result = system.place_order(cust, prodid, qty)
+            print(result)
+        elif cmd == "remove":
+            if len(parts) < 3:
+                raise ValueError("Malformed remove command")
+            class_type = parts[1].strip()
+            _id = int(parts[2])
+            system.remove_object(_id, class_type)
+        elif cmd == "search":
+            if len(parts) < 2:
+                raise ValueError("Malformed search command")
+            query = parts[1]
+            max_price = float(parts[2]) if len(parts) >= 3 else None
+            results = system.search_products(query, max_price)
+            for p in results:
+                print(p)
+        else:
+            raise ValueError("Unknown command")
+    except Exception:
+        raise
+
+
+def main():
+    # Standard argparse setup
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-l", dest="logfile", required=True)
+    parser.add_argument("-s", dest="initial")
+    parser.add_argument("-o", dest="orders_out")
+    parser.add_argument("-os", dest="system_out")
+
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        sys.stderr.write("Usage: python3 matamazon.py -l < matamazon_log > -s < matamazon_system > -o <output_file> -os <out_matamazon_system>\n")
+        sys.exit(1)
+
+    try:
+        if args.initial:
+            system = load_system_from_file(args.initial)
+        else:
+            system = MatamazonSystem()
+
+        with open(args.logfile, 'r') as f:
+            for line in f:
+                clean_line = line.strip()
+                if clean_line:
+                    _execute_log_line(system, clean_line)
+
+        if args.orders_out:
+            with open(args.orders_out, 'w') as out:
+                system.export_orders(out)
+                
+        if args.system_out:
+            system.export_system_to_file(args.system_out)
+
+    except Exception:
+        print("The matamazon script has encountered an error")
+
+if __name__ == "__main__":
+    main()
