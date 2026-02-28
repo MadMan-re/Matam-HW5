@@ -276,8 +276,26 @@ class MatamazonSystem:
         Notes:
             - The specification assumes quantity is an integer.
         """
-        # TODO implement this method as instructed
-        pass
+        if customer_id not in self.customers:
+            raise InvalidIdException(f"Customer {customer_id} does not exist")
+        
+        if not isinstance(quantity, int) or quantity <= 0:
+            raise InvalidIdException(f"Invalid quantity: {quantity}")
+
+        if product_id not in self.products:
+            return "The product does not exist in the system"
+        
+        product = self.products[product_id]
+        if quantity > product.quantity:
+            return "The quantity requested for this product is greater than the quantity in stock"
+        
+        product.quantity -= quantity
+        total_price = quantity * product.price
+        order = Order(self.next_order_id, customer_id, product_id, quantity, total_price)
+        self.orders[self.next_order_id] = order
+        self.next_order_id += 1
+        
+        return "The order has been accepted in the system"
 
     def remove_object(self, _id, class_type):
         """
