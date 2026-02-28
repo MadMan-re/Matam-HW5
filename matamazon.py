@@ -237,8 +237,17 @@ class MatamazonSystem:
                 - If the supplier_id does not exist in the system.
                 - If attempting to update a product but supplier_id differs from the existing product.
         """
-        # TODO implement this method as instructed
-        pass
+        if product.supplier_id not in self.suppliers:
+            raise InvalidIdException(f"Supplier {product.supplier_id} does not exist")
+        
+        if product.id in self.products:
+            if self.products[product.id].supplier_id != product.supplier_id:
+                raise InvalidIdException(f"Cannot update product {product.id} with different supplier")
+            self.products[product.id].name = product.name
+            self.products[product.id].price = product.price
+            self.products[product.id].quantity = product.quantity
+        else:
+            self.products[product.id] = product
 
     def place_order(self, customer_id, product_id, quantity=1):
         """
