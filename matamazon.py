@@ -318,8 +318,44 @@ class MatamazonSystem:
                   in the system (i.e., orders that were not removed).
                 - Additional InvalidIdException conditions as required by specification.
         """
-        # TODO implement this method as instructed
-        pass
+        if not isinstance(_id, int) or _id < 0:
+            raise InvalidIdException(f"Invalid id: {_id}")
+        # normalize and trim class_type to handle spacing/casing
+        class_type = class_type.strip().lower().capitalize()
+
+        if class_type == "Order":
+            if _id not in self.orders:
+                raise InvalidIdException(f"Order {_id} does not exist")
+            order = self.orders.pop(_id)
+            # restore stock if product still exists
+            if order.product_id in self.products:
+                self.products[order.product_id].quantity += order.quantity
+            return order.quantity
+        elif class_type == "Customer":
+            # check dependencies
+            for order in self.orders.values():
+                if order.customer_id == _id:
+                    raise InvalidIdException(f"Cannot remove customer with existing orders")
+            if _id not in self.customers:
+                raise InvalidIdException(f"Customer {_id} does not exist")
+            del self.customers[_id]
+        elif class_type == "Supplier":
+            for order in self.orders.values():
+                if order.product_id in self.products and self.products[order.product_id].supplier_id == _id:
+                    raise InvalidIdException(f"Cannot remove supplier with existing orders")
+            if _id not in self.suppliers:
+                raise InvalidIdException(f"Supplier {_id} does not exist")
+            del self.suppliers[_id]
+        elif class_type == "Product":
+            for order in self.orders.values():
+                if order.product_id == _id:
+                    raise InvalidIdException(f"Cannot remove product with existing orders")
+            if _id not in self.products:
+                raise InvalidIdException(f"Product {_id} does not exist")
+            del self.products[_id]
+        else:
+            # unknown class type
+            raise InvalidIdException(f"Unknown class type: {class_type}")
 
     def search_products(self, query, max_price=None):
         """
@@ -335,8 +371,14 @@ class MatamazonSystem:
                 - Sorted by ascending price.
                 - If no matching products exist, return an empty list.
         """
-        # TODO implement this method as instructed
-        pass
+        results = []
+        for product in self.products.values():
+            if query.lower() in product.name.lower() and product.quantity != 0:
+                if max_price is None or product.price <= max_price:
+                    results.append(product)
+        
+        results.sort(key=lambda p: p.price)
+        return results
 
     def export_system_to_file(self, path):
         """
@@ -353,8 +395,13 @@ class MatamazonSystem:
         Raises:
             OSError (or any file-open exception): Must be propagated to the caller.
         """
-        # TODO implement this method as instructed
-        pass
+        with open(path, 'w') as f:
+            for customer in self.customers.values():
+                f.write(str(customer) + '\n')
+            for supplier in self.suppliers.values():
+                f.write(str(supplier) + '\n')
+            for product in self.products.values():
+                f.write(str(product) + '\n')
 
     def export_orders(self, out_file):
         """
@@ -376,8 +423,19 @@ class MatamazonSystem:
         Notes:
             - The order origin city is the supplier city of the ordered product.
         """
-        # TODO implement this method as instructed
-        pass
+        orders_by_city = {}
+        
+        for order in self.orders.values():
+            product = self.products.get(order.product_id)
+            if product:
+                supplier = self.suppliers.get(product.supplier_id)
+                if supplier:
+                    city = supplier.city
+                    if city not in orders_by_city:
+                        orders_by_city[city] = []
+                    orders_by_city[city].append(str(order))
+        
+        json.dump(orders_by_city, out_file)
 
 
 def load_system_from_file(path):
@@ -400,7 +458,28 @@ def load_system_from_file(path):
     Notes:
         - The assignment hints that eval() may be used.
     """
-    # TODO implement this function as instructed
-    pass
+    system = MatamazonSystem()
+    products_buffer = []
+    
+    with open(path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            # any evaluation errors are considered fatal per tests
+            obj = eval(line)
+            
+            if isinstance(obj, Customer):
+                system.register_entity(obj, True)
+            elif isinstance(obj, Supplier):
+                system.register_entity(obj, False)
+            elif isinstance(obj, Product):
+                # defer product addition until all suppliers/customers processed
+                products_buffer.append(obj)
+    # second pass for products (may raise any exceptions normally)
+    for prod in products_buffer:
+        system.add_or_update_product(prod)
+    
+    return system
 
 # TODO all the main part here
