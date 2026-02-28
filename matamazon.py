@@ -56,8 +56,16 @@ class Supplier:
             Supplier(id=42, name='Yinon Goldshtein', city='Haifa, address='32 David Rose Street')
     """
 
-    # TODO implement this class as instructed
-    pass
+    def __init__(self, id, name, city, address):
+        if not isinstance(id, int) or id < 0:
+            raise InvalidIdException(f"Invalid id: {id}")
+        self.id = id
+        self.name = name
+        self.city = city
+        self.address = address
+    
+    def __str__(self):
+        return f"Supplier(id={self.id}, name='{self.name}', city='{self.city}', address='{self.address}')"
 
 
 class Product:
