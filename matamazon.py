@@ -100,13 +100,18 @@ class Product:
     """
 
     def __init__(self, id, name, price, supplier_id, quantity):
-        if  id < 0:
+        # ID and supplier_id must be integers and non-negative
+        if not isinstance(id, int) or id < 0:
             raise InvalidIdException(f"Invalid id: {id}")
+        if not isinstance(supplier_id, int) or supplier_id < 0:
+            raise InvalidIdException(f"Invalid supplier_id: {supplier_id}")
+        # price must be numeric (int or float) and non-negative
+        if not isinstance(price, (int, float)):
+            raise InvalidPriceException(f"Invalid price: {price}")
         if price < 0:
             raise InvalidPriceException(f"Invalid price: {price}")
-        if supplier_id < 0:
-            raise InvalidIdException(f"Invalid supplier_id: {supplier_id}")
-        if quantity < 0:
+        # quantity must be integer and non-negative
+        if not isinstance(quantity, int) or quantity < 0:
             raise InvalidIdException(f"Invalid quantity: {quantity}")
         self.id = id
         self.name = name
@@ -141,14 +146,18 @@ class Order:
     """
 
     def __init__(self, id, customer_id, product_id, quantity, total_price):
-        if id < 0:
+        # all ID/quantity fields must be integers and non-negative
+        if not isinstance(id, int) or id < 0:
             raise InvalidIdException(f"Invalid id: {id}")
-        if customer_id < 0:
+        if not isinstance(customer_id, int) or customer_id < 0:
             raise InvalidIdException(f"Invalid customer_id: {customer_id}")
-        if product_id < 0:
+        if not isinstance(product_id, int) or product_id < 0:
             raise InvalidIdException(f"Invalid product_id: {product_id}")
-        if quantity < 0:
+        if not isinstance(quantity, int) or quantity < 0:
             raise InvalidIdException(f"Invalid quantity: {quantity}")
+        # total_price must be numeric and non-negative
+        if not isinstance(total_price, (int, float)):
+            raise InvalidPriceException(f"Invalid total_price: {total_price}")
         if total_price < 0:
             raise InvalidPriceException(f"Invalid total_price: {total_price}")
         self.id = id
