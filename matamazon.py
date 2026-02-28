@@ -131,8 +131,25 @@ class Order:
 
     """
 
-    # TODO implement this class as instructed
-    pass
+    def __init__(self, id, customer_id, product_id, quantity, total_price):
+        if id < 0:
+            raise InvalidIdException(f"Invalid id: {id}")
+        if customer_id < 0:
+            raise InvalidIdException(f"Invalid customer_id: {customer_id}")
+        if product_id < 0:
+            raise InvalidIdException(f"Invalid product_id: {product_id}")
+        if quantity < 0:
+            raise InvalidIdException(f"Invalid quantity: {quantity}")
+        if total_price < 0:
+            raise InvalidPriceException(f"Invalid total_price: {total_price}")
+        self.id = id
+        self.customer_id = customer_id
+        self.product_id = product_id
+        self.quantity = quantity
+        self.total_price = total_price
+    
+    def __str__(self):
+        return f"Order(id={self.id}, customer_id={self.customer_id}, product_id={self.product_id}, quantity={self.quantity}, total_price={self.total_price})"
 
 
 class MatamazonSystem:
