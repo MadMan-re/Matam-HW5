@@ -6,6 +6,15 @@ import shlex
 import sys
 from typing import Dict, List
 
+class InvalidIdException(Exception):
+    """Exception raised when an ID is invalid."""
+    pass
+
+
+class InvalidPriceException(Exception):
+    """Exception raised when a price is invalid."""
+    pass
+
 
 class Customer:
     """
@@ -179,8 +188,12 @@ class MatamazonSystem:
             - Must be parameterless.
             - Internal collections may be chosen freely (dict/list, etc.).
         """
-        # TODO implement this method if needed
-        pass
+        self.customers = {}
+        self.suppliers = {}
+        self.products = {}
+        self.orders = {}
+        self.next_order_id = 1
+
 
     def register_entity(self, entity, is_customer):
         """
@@ -196,8 +209,14 @@ class MatamazonSystem:
                 - If the entity ID already exists in the system (note: IDs must be unique across
                   customers AND suppliers).
         """
-        # TODO implement this method as instructed
-        pass
+        if is_customer:
+            if entity.id in self.customers:
+                raise InvalidIdException(f"ID {entity.id} already exists in customers")
+            self.customers[entity.id] = entity
+        else:
+            if entity.id in self.suppliers:
+                raise InvalidIdException(f"ID {entity.id} already exists in suppliers")
+            self.suppliers[entity.id] = entity
 
     def add_or_update_product(self, product):
         """
