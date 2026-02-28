@@ -90,9 +90,23 @@ class Product:
             Product(id=101, name='Harry Potter Cushion', price=29.99, supplier_id=42, quantity=555)
     """
 
-    # TODO implement this class as instructed
-    pass
-
+    def __init__(self, id, name, price, supplier_id, quantity):
+        if  id < 0:
+            raise InvalidIdException(f"Invalid id: {id}")
+        if price < 0:
+            raise InvalidPriceException(f"Invalid price: {price}")
+        if supplier_id < 0:
+            raise InvalidIdException(f"Invalid supplier_id: {supplier_id}")
+        if quantity < 0:
+            raise InvalidIdException(f"Invalid quantity: {quantity}")
+        self.id = id
+        self.name = name
+        self.price = price
+        self.supplier_id = supplier_id
+        self.quantity = quantity
+    
+    def __str__(self):
+        return f"Product(id={self.id}, name='{self.name}', price={self.price}, supplier_id={self.supplier_id}, quantity={self.quantity})"
 
 class Order:
     """
