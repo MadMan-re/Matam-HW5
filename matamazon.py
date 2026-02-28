@@ -1,4 +1,11 @@
 # TODO add all imports needed here
+import argparse
+import json
+import os
+import shlex
+import sys
+from typing import Dict, List
+
 
 class Customer:
     """
@@ -19,8 +26,16 @@ class Customer:
         Exact formatting requirements appear in the assignment PDF.
     """
 
-    # TODO implement this class as instructed
-    pass
+    def __init__(self, id, name, city, address):
+        if not isinstance(id, int) or id < 0:
+            raise InvalidIdException(f"Invalid id: {id}")
+        self.id = id
+        self.name = name
+        self.city = city
+        self.address = address
+    
+    def __str__(self):
+        return f"Customer(id={self.id}, name='{self.name}', city='{self.city}', address='{self.address}')"
 
 
 class Supplier:
